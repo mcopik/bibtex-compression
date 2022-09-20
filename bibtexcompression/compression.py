@@ -111,7 +111,7 @@ def compress_proceedings(entry, settings: Settings):
     else:
         compressed['author'] = entry['author']
 
-    if not settings.remove_pages:
+    if not settings.remove_pages and 'pages' in entry:
         compressed['pages'] = entry['pages']
 
     # year can be skipped if it is already in the series name
@@ -131,14 +131,23 @@ def compress_proceedings(entry, settings: Settings):
 
 def compress_article(entry, settings: Settings):
 
+    if 'journal' not in entry:
+        logging.error(f"Article, ID {entry['ID']}, field journal not found - cannot compress that")
+        return entry
+
     compressed = {
         'ENTRYTYPE': entry['ENTRYTYPE'],
         'ID': entry['ID'],
-        'journal': entry['journal'],
         'title': entry['title'],
-        'volume': entry['volume'],
-        'year': entry['year']
     }
+
+    for field in ['volume', 'journal', 'year']:
+        if field in entry:
+            compressed[field] = entry[field]
+
+    if not settings.remove_pages and 'pages' in entry:
+        compressed['pages'] = entry['pages']
+
 
     # we do not apply customization during parsing because writer later fails
     # e.g. author customization creates a list and writer expects a string only
@@ -148,9 +157,6 @@ def compress_article(entry, settings: Settings):
         compressed['author'] = f'{first_author} et al.'
     else:
         compressed['author'] = entry['author']
-
-    if not settings.remove_pages:
-        compressed['pages'] = entry['pages']
 
     return compressed
 
