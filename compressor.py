@@ -5,9 +5,34 @@ from typing import List
 
 import bibtexparser
 from bibtexparser.bibdatabase import BibDatabase
-from bibtexparser.bparser import BibTexParser
 from bibtexparser.customization import author
 import click
+
+from bibtexcompression import usenix
+from bibtexcompression.database import Database
+
+# https://stackoverflow.com/questions/384076/how-can-i-color-python-logging-output
+class CustomFormatter(logging.Formatter):
+
+    grey = "\x1b[38;20m"
+    yellow = "\x1b[33;20m"
+    red = "\x1b[31;20m"
+    bold_red = "\x1b[31;1m"
+    reset = "\x1b[0m"
+    format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
+
+    FORMATS = {
+        logging.DEBUG: grey + format + reset,
+        logging.INFO: grey + format + reset,
+        logging.WARNING: yellow + format + reset,
+        logging.ERROR: red + format + reset,
+        logging.CRITICAL: bold_red + format + reset
+    }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        formatter = logging.Formatter(log_fmt)
+        return formatter.format(record)
 
 @dataclass
 class CompressionSettings:
@@ -16,20 +41,27 @@ class CompressionSettings:
     remove_pages: bool
     remove_year: bool
 
-
 def compress_proceedings(entry, settings: CompressionSettings):
 
     compressed = {'ENTRYTYPE': 'inproceedings', 'ID': entry['ID']}
 
     # remove the proceedings title, leaving only conference name
     if settings.remove_proceedings:
-        if 'series' in entry:
-            proceedings_name_key = "series"
-        else:
-            proceedings_name_key = "booktitle"
-            logging.warning(f"Proceedings, entry {entry['ID']}, 'series' not found, skipping removing proceedings")
 
-        compressed[proceedings_name_key] = entry[proceedings_name_key]
+        if 'publisher' in entry and 'USENIX' in entry['publisher']:
+            proceedings_name = usenix.extract_series(entry)
+            proceedings_name_key = "series"
+            compressed[proceedings_name_key] = proceedings_name
+        else:
+
+            if 'series' in entry:
+                proceedings_name_key = "series"
+            else:
+                proceedings_name_key = "booktitle"
+                logging.warning(f"Proceedings, entry {entry['ID']}, 'series' not found, skipping removing proceedings")
+
+            compressed[proceedings_name_key] = entry[proceedings_name_key]
+
     else:
         proceedings_name_key = "booktitle"
 
@@ -51,7 +83,7 @@ def compress_proceedings(entry, settings: CompressionSettings):
         year = entry['year']
         shortened_year = f"'{year[2:4]}"
 
-        if not year in entry[proceedings_name_key] and not shortened_year in entry[proceedings_name_key]:
+        if not year in compressed[proceedings_name_key] and not shortened_year in compressed[proceedings_name_key]:
             compressed['year'] = entry['year']
     else:
         compressed['year'] = entry['year']
@@ -71,23 +103,19 @@ def compress(input, output, **kwargs):
 
     options = CompressionSettings(**kwargs)
 
-    try:
+    handler = logging.StreamHandler()
+    handler.setLevel(logging.INFO)
+    handler.setFormatter(CustomFormatter())
+    logging.basicConfig(
+        handlers = [handler],
+        level=logging.INFO,
+        format= '[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s',
+        datefmt='%H:%M:%S'
+    )
 
-        with open(input, 'r') as bibtex_file:
-
-            parser = BibTexParser()
-            bib_database = bibtexparser.load(bibtex_file, parser=parser)
-
-    # support non-numerical month names
-    except bibtexparser.bibdatabase.UndefinedString:
-
-        with open(input, 'r') as bibtex_file:
-
-            parser = BibTexParser(common_strings=True)
-            bib_database = bibtexparser.load(bibtex_file, parser=parser)
+    bib_database = Database(input)
 
     compressed_entries: List[dict] = []
-
     for entry in bib_database.entries:
 
 
