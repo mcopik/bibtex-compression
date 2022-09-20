@@ -6,7 +6,7 @@ from typing import List
 import bibtexparser
 from bibtexparser.bibdatabase import BibDatabase
 from bibtexparser.bparser import BibTexParser
-from bibtexparser.customization import *
+from bibtexparser.customization import author
 import click
 
 @dataclass
@@ -27,14 +27,17 @@ def compress_proceedings(entry, settings: CompressionSettings):
             proceedings_name_key = "series"
         else:
             proceedings_name_key = "booktitle"
-            logging.warning("Proceedings, entry 'series' not found, skipping removing proceedings")
+            logging.warning(f"Proceedings, entry {entry['ID']}, 'series' not found, skipping removing proceedings")
 
         compressed[proceedings_name_key] = entry[proceedings_name_key]
     else:
         proceedings_name_key = "booktitle"
 
+    # we do not apply customization during parsing because writer later fails
+    # e.g. author customization creates a list and writer expects a string only
+    # Source: https://bibtexparser.readthedocs.io/en/master/tutorial.html#customizations
     if settings.shorten_authors:
-        first_author = entry['author'][0]
+        first_author = author(entry.copy())['author'][0]
         compressed['author'] = f'{first_author} et al.'
     else:
         compressed['author'] = entry['author']
@@ -66,20 +69,22 @@ def compress_proceedings(entry, settings: CompressionSettings):
 @click.option('--remove-year', type=bool, default=True, help='Try to remove year if it already appears, e.g., in conference name.')
 def compress(input, output, **kwargs):
 
-    # Create customizations to enable non-standard parsing.
-    # Source: https://bibtexparser.readthedocs.io/en/master/tutorial.html#customizations
-    def customizations(record):
-        record = type(record)
-        record = author(record)
-        return record
-
     options = CompressionSettings(**kwargs)
 
-    with open(input, 'r') as bibtex_file:
+    try:
 
-        parser = BibTexParser()
-        parser.customization = customizations
-        bib_database = bibtexparser.load(bibtex_file, parser=parser)
+        with open(input, 'r') as bibtex_file:
+
+            parser = BibTexParser()
+            bib_database = bibtexparser.load(bibtex_file, parser=parser)
+
+    # support non-numerical month names
+    except bibtexparser.bibdatabase.UndefinedString:
+
+        with open(input, 'r') as bibtex_file:
+
+            parser = BibTexParser(common_strings=True)
+            bib_database = bibtexparser.load(bibtex_file, parser=parser)
 
     compressed_entries: List[dict] = []
 
