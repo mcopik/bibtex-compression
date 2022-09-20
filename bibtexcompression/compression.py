@@ -81,6 +81,17 @@ def compress_proceedings_name(entry) -> Optional[str]:
 
     return None
 
+def compress_author(entry, settings):
+
+    # we do not apply customization during parsing because writer later fails
+    # e.g. author customization creates a list and writer expects a string only
+    # Source: https://bibtexparser.readthedocs.io/en/master/tutorial.html#customizations
+    if settings.shorten_authors:
+        first_author = author(entry.copy())['author'][0]
+        return f'{first_author} and others'
+    else:
+        return entry['author']
+
 def compress_proceedings(entry, settings: Settings):
 
     compressed = {'ENTRYTYPE': 'inproceedings', 'ID': entry['ID']}
@@ -103,17 +114,7 @@ def compress_proceedings(entry, settings: Settings):
         proceedings_name_key = "booktitle"
         compressed[proceedings_name_key] = entry[proceedings_name_key]
 
-    # we do not apply customization during parsing because writer later fails
-    # e.g. author customization creates a list and writer expects a string only
-    # Source: https://bibtexparser.readthedocs.io/en/master/tutorial.html#customizations
-    if settings.shorten_authors:
-        first_author = author(entry.copy())['author'][0]
-        compressed['author'] = f'{first_author} et al.'
-    else:
-        compressed['author'] = entry['author']
-
-    if not settings.remove_pages and 'pages' in entry:
-        compressed['pages'] = entry['pages']
+    compressed['author'] = compress_author(entry, settings)
 
     # year can be skipped if it is already in the series name
     if settings.remove_year:
@@ -149,15 +150,7 @@ def compress_article(entry, settings: Settings):
     if not settings.remove_pages and 'pages' in entry:
         compressed['pages'] = entry['pages']
 
-
-    # we do not apply customization during parsing because writer later fails
-    # e.g. author customization creates a list and writer expects a string only
-    # Source: https://bibtexparser.readthedocs.io/en/master/tutorial.html#customizations
-    if settings.shorten_authors:
-        first_author = author(entry.copy())['author'][0]
-        compressed['author'] = f'{first_author} et al.'
-    else:
-        compressed['author'] = entry['author']
+    compressed['author'] = compress_author(entry, settings)
 
     return compressed
 
