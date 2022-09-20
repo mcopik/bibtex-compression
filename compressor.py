@@ -6,7 +6,8 @@ import bibtexparser
 from bibtexparser.bibdatabase import BibDatabase
 import click
 
-from bibtexcompression.compression import compress, Settings
+from bibtexcompression.compression import compress
+from bibtexcompression.compression import Settings as CompressionSettings
 from bibtexcompression.database import Database
 
 # https://stackoverflow.com/questions/384076/how-can-i-color-python-logging-output
@@ -39,9 +40,9 @@ class CustomFormatter(logging.Formatter):
 @click.option('--remove-proceedings', type=bool, default=True, help='Remove proceeding names for conferences when venue name is provided.')
 @click.option('--remove-pages', type=bool, default=True, help='Remove the page numberproceeding names for conferences when venue name is provided.')
 @click.option('--remove-year', type=bool, default=True, help='Try to remove year if it already appears, e.g., in conference name.')
-def compress(input, output, **kwargs):
+def cli(input, output, **kwargs):
 
-    options = Settings(**kwargs)
+    options = CompressionSettings(**kwargs)
 
     handler = logging.StreamHandler()
     handler.setLevel(logging.INFO)
@@ -58,7 +59,7 @@ def compress(input, output, **kwargs):
     compressed_entries: List[dict] = []
     for entry in bib_database.entries:
 
-        compressed_entries.append(compress(parsed_entry, options))
+        compressed_entries.append(compress(entry, options))
 
     compressed_db = BibDatabase()
     compressed_db.entries = compressed_entries
@@ -67,5 +68,5 @@ def compress(input, output, **kwargs):
         bibtexparser.dump(compressed_db, bibtex_out_file)
 
 if __name__ == '__main__':
-    compress()
+    cli()
 
