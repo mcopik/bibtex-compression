@@ -1,6 +1,8 @@
 
 import logging
+import re
 from dataclasses import dataclass
+from typing import Optional
 
 from bibtexparser.customization import author
 
@@ -12,6 +14,21 @@ class Settings:
     remove_proceedings: bool
     remove_pages: bool
     remove_year: bool
+
+def extract_series(title) -> Optional[str]:
+
+    """
+        Match the following pattern:
+        #year #conference_name (BlaBla)
+        BlaBla is what we need to extract
+    """
+
+    regex = r'[0-9]+ [a-zA-z/ ]+ \((.*)\)'
+    match_regex = re.search(regex, title)
+    if match_regex:
+        return match_regex.group(1)
+    else:
+        return None
 
 def compress_proceedings(entry, settings: Settings):
 
@@ -28,11 +45,18 @@ def compress_proceedings(entry, settings: Settings):
 
             if 'series' in entry:
                 proceedings_name_key = "series"
+                compressed[proceedings_name_key] = entry[proceedings_name_key]
             else:
-                proceedings_name_key = "booktitle"
-                logging.warning(f"Proceedings, entry {entry['ID']}, 'series' not found, skipping removing proceedings")
+                proceedings_name_key = ""
+                extracted_series = extract_series(entry['booktitle'])
 
-            compressed[proceedings_name_key] = entry[proceedings_name_key]
+                if extracted_series:
+                    proceedings_name_key = "series"
+                    compressed[proceedings_name_key] = extracted_series
+                else:
+                    proceedings_name_key = "booktitle"
+                    compressed[proceedings_name_key] = entry[proceedings_name_key]
+                    logging.warning(f"Proceedings, entry {entry['ID']}, 'series' not found, querying for series in 'booktitle' failed, skipping removing proceedings")
 
     else:
         proceedings_name_key = "booktitle"
