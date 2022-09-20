@@ -12,6 +12,15 @@ def remove_redundant_usenix(name):
     regex = '{?USENIX}? '
     return re.sub(regex, '', name)
 
+def remove_redundant_parentheses(name):
+
+    """
+        Verify if the conference name is not surrounded by parentheses.
+        Replace (OSDI 16) -> OSDI 16.
+    """
+    regex = '[()]'
+    return re.sub(regex, '', name)
+
 def extract_series(entry):
 
     """
@@ -23,18 +32,19 @@ def extract_series(entry):
     """
 
     if 'series' in entry:
-        series = remove_redundant_usenix(entry['series'])
+        series = remove_redundant_parentheses(remove_redundant_usenix(entry['series']))
     else:
 
         name_search = re.search('\({?(USENIX)?}? ?{?[a-zA-Z]+}? [0-9]+\)', entry['booktitle'], re.IGNORECASE)
         if name_search:
-            series = remove_redundant_usenix(name_search.group(0))
+            series = remove_redundant_parentheses(remove_redundant_usenix(name_search.group(0)))
         elif 'booktitle' in entry:
             logging.warning(f'Could not extract USENIX conference name from proceedings {entry["booktitle"]}')
             series = entry['booktitle']
         else:
             logging.error('Could not parse USENIX conference name - series and booktitle are missing!')
             raise RuntimeError()
+
 
     return series
 
