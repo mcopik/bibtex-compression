@@ -38,7 +38,7 @@ class CustomFormatter(logging.Formatter):
 @click.argument('output', type=str)
 @click.option('--shorten-authors', type=bool, default=True, help='Replace authors with et al.')
 @click.option('--remove-proceedings', type=bool, default=True, help='Remove proceeding names for conferences when venue name is provided.')
-@click.option('--remove-pages', type=bool, default=True, help='Remove the page numberproceeding names for conferences when venue name is provided.')
+@click.option('--remove-pages', type=bool, default=False, help='Remove the page numberproceeding names for conferences when venue name is provided.')
 @click.option('--remove-year', type=bool, default=True, help='Try to remove year if it already appears, e.g., in conference name.')
 def cli(input, output, **kwargs):
 

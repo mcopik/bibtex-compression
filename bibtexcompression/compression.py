@@ -129,6 +129,31 @@ def compress_proceedings(entry, settings: Settings):
 
     return compressed
 
+def compress_article(entry, settings: Settings):
+
+    compressed = {
+        'ENTRYTYPE': entry['ENTRYTYPE'],
+        'ID': entry['ID'],
+        'journal': entry['journal'],
+        'title': entry['title'],
+        'volume': entry['volume'],
+        'year': entry['year']
+    }
+
+    # we do not apply customization during parsing because writer later fails
+    # e.g. author customization creates a list and writer expects a string only
+    # Source: https://bibtexparser.readthedocs.io/en/master/tutorial.html#customizations
+    if settings.shorten_authors:
+        first_author = author(entry.copy())['author'][0]
+        compressed['author'] = f'{first_author} et al.'
+    else:
+        compressed['author'] = entry['author']
+
+    if not settings.remove_pages:
+        compressed['pages'] = entry['pages']
+
+    return compressed
+
 def compress(entry, settings: Settings):
 
     match entry['ENTRYTYPE']:
@@ -136,7 +161,10 @@ def compress(entry, settings: Settings):
         case 'inproceedings':
             return compress_proceedings(entry, settings)
 
+        case 'article':
+            return compress_article(entry, settings)
+
         case _:
-            logging.warning(f"Unknown entry type: {entry['ENTRYTYPE']}, skipping compression.")       
+            logging.warning(f"Unknown entry type: {entry['ENTRYTYPE']} for ID {entry['ID']}, skipping compression.")       
             return entry
 
