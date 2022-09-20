@@ -39,7 +39,7 @@ def match_conference(title) -> Optional[str]:
         Thus, it's easier to go over all mappings.
     """
     for conference, short_name in conference_mappings.conferences.items():
-        if conference in title:
+        if conference.lower() in title.lower():
             return short_name
 
     return None
@@ -49,10 +49,11 @@ def extract_series(title) -> Optional[str]:
     """
         Match the following pattern:
         #year #conference_name (BlaBla)
-        BlaBla is what we need to extract
+        BlaBla is what we need to extract.
+        We match until the end to handle correctly situations such as "Proceedings of IPDPS, Workshop X"
     """
 
-    regex = r'[0-9]+ [0-9a-zA-z/, ]+ \((.*)\)'
+    regex = r'[0-9a-zA-z/, ]+ \((.*)\)$'
     match_regex = re.search(regex, title)
     if match_regex:
         return match_regex.group(1)
@@ -162,6 +163,16 @@ def compress_article(entry, settings: Settings):
 
 def compress(entry, settings: Settings):
 
+    """
+        We support the following classes of documents:
+        - conference proceedings (inproceedings)
+        - journal articles (article)
+
+        We do not support the type "misc".
+
+        Everything else is reported as warning to the user.
+    """
+
     match entry['ENTRYTYPE']:
 
         case 'inproceedings':
@@ -169,6 +180,9 @@ def compress(entry, settings: Settings):
 
         case 'article':
             return compress_article(entry, settings)
+
+        case 'misc':
+            return entry
 
         case _:
             logging.warning(f"Unknown entry type: {entry['ENTRYTYPE']} for ID {entry['ID']}, skipping compression.")       

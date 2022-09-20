@@ -61,6 +61,7 @@ def cli(input, output, **kwargs):
 
         compressed_entries.append(compress(entry, options))
 
+
     compressed_db = BibDatabase()
     compressed_db.entries = compressed_entries
 

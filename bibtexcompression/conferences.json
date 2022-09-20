@@ -6,5 +6,8 @@
   "International Symposium on Cluster, Cloud and Grid Computing": "CCGrid",
   "International Symposium on High-Performance Computer Architecture": "HPCA",
   "International Symposium on High Performance Computer Architecture": "HPCA",
-  "Symposium on Operating Systems Principles": "SOSP"
+  "Symposium on Operating Systems Principles": "SOSP",
+  "International Conference on High Performance Computing, Networking, Storage and Analysis": "SC",
+  "International Conference for High Performance Computing, Networking, Storage and Analysis": "SC",
+  "International Symposium on High-Performance Parallel and Distributed Computing": "HPDC"
 }

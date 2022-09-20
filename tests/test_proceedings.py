@@ -14,7 +14,7 @@ OUTPUT_PATH = os.path.join(FILEPATH, 'output', 'proceedings.bib')
 class Data:
     def __init__(self):
         self.input_db = Database(INPUT_PATH, sort_entries=True)
-        self.ouput_db = Database(OUTPUT_PATH, sort_entries=True)
+        self.output_db = Database(OUTPUT_PATH, sort_entries=True)
 
 settings = Settings(
     shorten_authors=True,
@@ -24,7 +24,7 @@ settings = Settings(
 )
 
 
-@pytest.fixture(params=zip(Data().input_db.entries, Data().ouput_db.entries))
+@pytest.fixture(params=zip(Data().input_db.entries, Data().output_db.entries))
 def entry(request):
     return request.param
 
