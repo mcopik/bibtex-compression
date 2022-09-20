@@ -14,6 +14,7 @@ class CompressionSettings:
     shorten_authors: bool
     remove_proceedings: bool
     remove_pages: bool
+    remove_year: bool
 
 
 def compress_proceedings(entry, settings: CompressionSettings):
@@ -23,10 +24,14 @@ def compress_proceedings(entry, settings: CompressionSettings):
     # remove the proceedings title, leaving only conference name
     if settings.remove_proceedings:
         if 'series' in entry:
-            compressed["series"] = entry["series"]
+            proceedings_name_key = "series"
         else:
-            compressed['booktitle'] = entry["booktitle"]
+            proceedings_name_key = "booktitle"
             logging.warning("Proceedings, entry 'series' not found, skipping removing proceedings")
+
+        compressed[proceedings_name_key] = entry[proceedings_name_key]
+    else:
+        proceedings_name_key = "booktitle"
 
     if settings.shorten_authors:
         first_author = entry['author'][0]
@@ -34,8 +39,20 @@ def compress_proceedings(entry, settings: CompressionSettings):
     else:
         compressed['author'] = entry['author']
 
-    # TODO: year can be skipped if it is already in the series name
-    compressed['year'] = entry['year']
+    if not settings.remove_pages:
+        compressed['pages'] = entry['pages']
+
+    # year can be skipped if it is already in the series name
+    if settings.remove_year:
+        
+        year = entry['year']
+        shortened_year = f"'{year[2:4]}"
+
+        if not year in entry[proceedings_name_key] and not shortened_year in entry[proceedings_name_key]:
+            compressed['year'] = entry['year']
+    else:
+        compressed['year'] = entry['year']
+
     compressed['title'] = entry['title']
 
     return compressed
@@ -46,6 +63,7 @@ def compress_proceedings(entry, settings: CompressionSettings):
 @click.option('--shorten-authors', type=bool, default=True, help='Replace authors with et al.')
 @click.option('--remove-proceedings', type=bool, default=True, help='Remove proceeding names for conferences when venue name is provided.')
 @click.option('--remove-pages', type=bool, default=True, help='Remove the page numberproceeding names for conferences when venue name is provided.')
+@click.option('--remove-year', type=bool, default=True, help='Try to remove year if it already appears, e.g., in conference name.')
 def compress(input, output, **kwargs):
 
     # Create customizations to enable non-standard parsing.
