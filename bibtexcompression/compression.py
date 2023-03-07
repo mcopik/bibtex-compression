@@ -17,6 +17,7 @@ class Settings:
     remove_proceedings: bool
     remove_pages: bool
     remove_year: bool
+    replace_booktitle: bool
 
 class ConferenceMappings:
 
@@ -103,7 +104,7 @@ def compress_proceedings(entry, settings: Settings):
         extracted_series = compress_proceedings_name(entry)
         if extracted_series is not None:
 
-            proceedings_name_key = "booktitle"
+            proceedings_name_key = "booktitle" if settings.replace_booktitle else "series"
             compressed[proceedings_name_key] = extracted_series
 
         else:

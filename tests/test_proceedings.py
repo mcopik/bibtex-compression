@@ -20,6 +20,7 @@ settings = Settings(
     shorten_authors=True,
     remove_year=True,
     remove_proceedings=True,
+    replace_booktitle=False,
     remove_pages=True
 )
 
