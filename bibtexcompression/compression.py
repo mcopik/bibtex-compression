@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import re
+import sys
 from dataclasses import dataclass
 from typing import Optional
 
@@ -26,7 +27,7 @@ class ConferenceMappings:
 
     @property
     def conferences(self):
-        return self._data 
+        return self._data
 
 FILEPATH = os.path.dirname(os.path.realpath(__file__))
 conference_mappings = ConferenceMappings(os.path.join(FILEPATH, 'conferences.json'))
@@ -118,7 +119,7 @@ def compress_proceedings(entry, settings: Settings):
 
     # year can be skipped if it is already in the series name
     if settings.remove_year:
-        
+
         year = entry['year']
         shortened_year = f"'{year[2:4]}"
 
@@ -166,6 +167,10 @@ def compress(entry, settings: Settings):
         Everything else is reported as warning to the user.
     """
 
+    # Fallback option for python < 3.10
+    if sys.version_info[:2] < (3, 10):
+        return compress_fallback(entry, settings)
+
     match entry['ENTRYTYPE']:
 
         case 'inproceedings':
@@ -178,6 +183,19 @@ def compress(entry, settings: Settings):
             return entry
 
         case _:
-            logging.warning(f"Unknown entry type: {entry['ENTRYTYPE']} for ID {entry['ID']}, skipping compression.")       
+            logging.warning(f"Unknown entry type: {entry['ENTRYTYPE']} for ID {entry['ID']}, skipping compression.")
             return entry
+
+def compress_fallback(entry, settings: Settings):
+
+    if entry['ENTRYTYPE'] == 'inproceedings':
+        return compress_proceedings(entry, settings)
+    elif entry['ENTRYTYPE'] == 'article':
+        return compress_article(entry, settings)
+    elif entry['ENTRYTYPE'] == 'misc':
+        return entry
+    else:
+        logging.warning(f"Unknown entry type: {entry['ENTRYTYPE']} for ID {entry['ID']}, skipping compression.")
+        return entry
+
 
