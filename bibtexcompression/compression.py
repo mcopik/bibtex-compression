@@ -103,7 +103,7 @@ def compress_proceedings(entry, settings: Settings):
         extracted_series = compress_proceedings_name(entry)
         if extracted_series is not None:
 
-            proceedings_name_key = "series"
+            proceedings_name_key = "booktitle"
             compressed[proceedings_name_key] = extracted_series
 
         else:
@@ -167,10 +167,6 @@ def compress(entry, settings: Settings):
         Everything else is reported as warning to the user.
     """
 
-    # Fallback option for python < 3.10
-    if sys.version_info[:2] < (3, 10):
-        return compress_fallback(entry, settings)
-
     match entry['ENTRYTYPE']:
 
         case 'inproceedings':
@@ -185,17 +181,5 @@ def compress(entry, settings: Settings):
         case _:
             logging.warning(f"Unknown entry type: {entry['ENTRYTYPE']} for ID {entry['ID']}, skipping compression.")
             return entry
-
-def compress_fallback(entry, settings: Settings):
-
-    if entry['ENTRYTYPE'] == 'inproceedings':
-        return compress_proceedings(entry, settings)
-    elif entry['ENTRYTYPE'] == 'article':
-        return compress_article(entry, settings)
-    elif entry['ENTRYTYPE'] == 'misc':
-        return entry
-    else:
-        logging.warning(f"Unknown entry type: {entry['ENTRYTYPE']} for ID {entry['ID']}, skipping compression.")
-        return entry
 
 
