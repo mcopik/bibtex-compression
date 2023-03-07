@@ -18,6 +18,7 @@ class Settings:
     remove_pages: bool
     remove_year: bool
     replace_booktitle: bool
+    beautify_arxiv: bool
 
 class ConferenceMappings:
 
@@ -151,6 +152,12 @@ def compress_article(entry, settings: Settings):
 
     if not settings.remove_pages and 'pages' in entry:
         compressed['pages'] = entry['pages']
+
+    if (compressed['journal'] == 'CoRR' or compressed['journal'].lower() == 'arxiv') and settings.beautify_arxiv:
+
+        volume = compressed['volume'].removeprefix('abs/')
+        compressed['journal'] = f"arXiv:{volume}"
+        del compressed['volume']
 
     compressed['author'] = compress_author(entry, settings)
 

@@ -42,6 +42,7 @@ class CustomFormatter(logging.Formatter):
 @click.option('--remove-pages', type=bool, default=False, help='Remove the page numberproceeding names for conferences when venue name is provided.')
 @click.option('--remove-year', type=bool, default=True, help='Try to remove year if it already appears, e.g., in conference name.')
 @click.option('--replace-booktitle', type=bool, default=True, help='Replace the booktitle in proceedings with conference series.')
+@click.option('--beautify-arxiv', type=bool, default=True, help='Replace default arXiv CoRR journal into a nicer representation.')
 def cli(input, output, **kwargs):
 
     options = CompressionSettings(**kwargs)

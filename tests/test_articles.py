@@ -21,7 +21,8 @@ settings = Settings(
     remove_year=True,
     remove_proceedings=True,
     replace_booktitle=False,
-    remove_pages=False
+    remove_pages=False,
+    beautify_arxiv=False
 )
 
 @pytest.fixture(params=zip(Data().input_db.entries, Data().ouput_db.entries))
@@ -40,7 +41,8 @@ def test_entry_without_pages(entry):
         remove_year=True,
         remove_proceedings=True,
         replace_booktitle=False,
-        remove_pages=True
+        remove_pages=True,
+        beautify_arxiv=False
     )
 
     # verify that pages are actually removed
